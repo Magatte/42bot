@@ -76,48 +76,48 @@ controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, mess
 })
 
 controller.hears(['.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message,direct_mention,mention', function(bot, message) {
- 30         bot.api.reactions.add({
- 31                 timestamp: message.ts,
- 32                 channel: message.channel,
- 33                 name: 'robot_face',
- 34         }, function(err, res) {
- 35                 if (err) {
- 36                         bot.botkit.log('Failed to add emoji reaction :(', err);
- 37                 }
- 38         });
- 39 
- 40         controller.storage.users.get(message.user, function(err, user) {
- 41                 if (user && user.name) {
- 42                         bot.reply(message, 'Hey what\'s up ' + user.name + '!! Do you wanna play ?');
- 43                 } else {
- 44                         bot.reply(message, 'Hey what\'s up. Do you wanna play ?');
- 45                 }
- 46                 bot.reply(message, {
- 47                         attachments:[
- 48                                 {
- 49                                         "text": "You'll have to find out the capital city of a random country motherfucker mouhahaha.",
- 50                                         "fallback": "Oh what a loser you are !!",
- 51                                         "callback_id": "cc_game",
- 52                                         "color": "#3AA3E3",
- 53                                         "attachment_type": "default",
- 54                                         "actions": [
- 55                                                 {
- 56                                                         "name":"yes",
- 57                                                         "text": "YES",
- 58                                                         "style": "primary",
- 59                                                         "type": "button",
- 60                                                         "value": "yes"
- 61                                                 },
- 62                                                 {
- 63                                                         "name":"no",
- 64                                                         "text": "NO",
- 65                                                         "style": "default",
- 66                                                         "type": "button",
- 67                                                         "value": "no"
- 68                                                 }
- 69                                         ]
- 70                                 }
- 71                         ]
- 72                 });
- 73         });
- 74 });
+  bot.api.reactions.add({
+    timestamp: message.ts,
+    channel: message.channel,
+    name: 'robot_face',
+  }, function(err, res) {
+    if (err) {
+      bot.botkit.log('Failed to add emoji reaction :(', err);
+    }
+  });
+
+  controller.storage.users.get(message.user, function(err, user) {
+    if (user && user.name) {
+      bot.reply(message, 'Hey what\'s up ' + user.name + '!! Do you wanna play ?');
+    } else {
+      bot.reply(message, 'Hey what\'s up. Do you wanna play ?');
+    }
+    bot.reply(message, {
+      attachments:[
+        {
+          "text": "You'll have to find out the capital city of a random country motherfucker mouhahaha.",
+          "fallback": "Oh what a loser you are !!",
+          "callback_id": "cc_game",
+          "color": "#3AA3E3",
+          "attachment_type": "default",
+          "actions": [
+            {
+              "name":"yes",
+              "text": "YES",
+              "style": "primary",
+              "type": "button",
+              "value": "yes"
+            },
+            {
+              "name":"no",
+              "text": "NO",
+              "style": "default",
+              "type": "button",
+              "value": "no"
+            }
+          ]
+        }
+      ]
+    });
+  });
+});
