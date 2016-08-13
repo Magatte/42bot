@@ -84,7 +84,7 @@ controller.hears(['.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message,direc
     if (err) {
       bot.botkit.log('Failed to add emoji reaction :(', err);
     }
-  });
+  })
 
   controller.storage.users.get(message.user, function(err, user) {
     if (user && user.name) {
@@ -118,6 +118,6 @@ controller.hears(['.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message,direc
           ]
         }
       ]
-    });
-  });
-});
+    })
+  })
+})
