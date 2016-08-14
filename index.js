@@ -62,7 +62,7 @@ controller.hears(['attachment'], ['direct_message', 'direct_mention'], function 
   })
 })
 
-controller.hears(['.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message,direct_mention,mention', function(bot, message) {
+controller.hears(['/quiz|.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message,direct_mention,mention', function(bot, message) {
   bot.api.reactions.add({
     timestamp: message.ts,
     channel: message.channel,
