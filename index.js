@@ -128,7 +128,7 @@ controller.hears(['/quiz|.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message
             }
           }
         ]
-      )
+      );
     })
   })
 })
