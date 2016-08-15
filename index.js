@@ -107,32 +107,31 @@ controller.hears(['/quiz|.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message
           }
         ]
       },
-        [
-          {
-            "pattern":"yes",
-            callback: function(reply, convo) {
-              //convo.say('It\'s good');
-              //convo.next();
-            }
-          },
-          {
-            "pattern":"no",
-            callback: function(reply) {
-              //convo.say('It\'s not good');
-              //convo.next();
-            }
+      [
+      {
+        pattern:"yes",
+        callback: function(reply, convo) {
+          //convo.say('It\'s good');
+          //convo.next();
           }
-          /*{
-            "default": true,
-            callback: function(reply, convo) {
-
+      },
+      {
+        pattern:"no",
+        callback: function(reply) {
+            //convo.say('It\'s not good');
+            //convo.next();
             }
-          }*/
-        ]
-      )
-    })
-  })
-})
+        }
+        {
+          default: true,
+          callback: function(reply, convo) {
+
+          }
+        }
+      ]);
+    });
+  });
+});
 
 controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
   bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. \n')
