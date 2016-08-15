@@ -103,6 +103,18 @@ controller.hears(['/quiz|.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message
               "value": "no"
             }
           ]
+          {
+            pattern:"yes",
+            callback: function(reply) {
+              bot.reply(message, 'It\'s good')
+            }
+          }
+          {
+            pattern:"no",
+            callback: function(reply) {
+              bot.reply(message, 'It\'s not good')
+            }
+          }
         }
       ]
     })
