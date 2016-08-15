@@ -79,50 +79,54 @@ controller.hears(['/quiz|.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message
     } else {
       bot.reply(message, 'Hey what\'s up. Do you wanna play ?');
     }
-    bot.reply(message, {
-      attachments:[
-        {
-          "text": "You'll have to find out the capital city of a random country motherfucker mouhahaha.",
-          "fallback": "Oh what a loser you are !!",
-          "callback_id": "cc_game",
-          "color": "#3AA3E3",
-          "attachment_type": "default",
-          "actions": [
+    bot.startConversation(message, function(err, convo) {
+      convo.ask({
+        attachments:[
+          {
+            title: 'You\'ll have to find out the capital city of a random country motherfucker mouhahaha.',
+            fallback: 'Oh what a loser you are !!',
+            callback_id: '123',
+            color: '#3AA3E3',
+            attachment_type: 'default',
+            actions: [
+              {
+                "name":"yes",
+                "text": "YES",
+                "style": "primary",
+                "type": "button",
+                "value": "yes"
+              },
+              {
+                "name":"no",
+                "text": "NO",
+                "style": "default",
+                "type": "button",
+                "value": "no"
+              }
+            ]
             {
-              "name":"yes",
-              "text": "YES",
-              "style": "primary",
-              "type": "button",
-              "value": "yes"
+              pattern:"yes",
+              callback: function(reply, convo) {
+                convo.say('It\'s good');
+                convo.next();
+              }
             },
             {
-              "name":"no",
-              "text": "NO",
-              "style": "default",
-              "type": "button",
-              "value": "no"
-            }
-          ]
-          {
-            pattern:"yes",
-            callback: function(reply,) {
-              bot.reply(message, 'It\'s good');
-            }
-          },
-          {
-            pattern:"no",
-            callback: function(reply) {
-              bot.reply(message, 'It\'s not good');
-            }
-          },
-          {
-            default: true,
-            callback: function(reply) {
+              pattern:"no",
+              callback: function(reply) {
+                convo.say('It\'s not good');
+                convo.next();
+              }
+            },
+            {
+              default: true,
+              callback: function(reply, convo) {
 
+              }
             }
           }
-        }
-      ]
+        ]
+      })
     })
   })
 })
