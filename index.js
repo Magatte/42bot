@@ -83,11 +83,11 @@ controller.hears(['/quiz|.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message
       convo.ask({
         attachments:[
           {
-            title: 'You\'ll have to find out the capital city of a random country motherfucker mouhahaha.',
-            fallback: 'Oh what a loser you are !!',
-            callback_id: '123',
-            color: '#3AA3E3',
-            attachment_type: 'default',
+            "title": "You\'ll have to find out the capital city of a random country motherfucker mouhahaha.",
+            "fallback": "Oh what a loser you are !!",
+            "callback_id": "123",
+            "color": "#3AA3E3",
+            "attachment_type": "default",
             actions: [
               {
                 "name":"yes",
