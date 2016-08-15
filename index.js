@@ -130,7 +130,7 @@ controller.hears(['/quiz|.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message
         }
       ])
     })
-  });
+  })
 })
 
 controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
