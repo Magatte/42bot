@@ -110,15 +110,15 @@ controller.hears(['/quiz|.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message
           {
             pattern:"yes",
             callback: function(reply, convo) {
-              convo.say('It\'s good')
-              convo.next()
+              convo.say('It\'s good');
+              convo.next();
             }
           },
           {
             pattern:"no",
             callback: function(reply) {
-              convo.say('It\'s not good')
-              convo.next()
+              convo.say('It\'s not good');
+              convo.next();
             }
           },
           {
