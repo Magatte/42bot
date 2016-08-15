@@ -1,138 +1,305 @@
-var Botkit = require('botkit')
+var Botkit = require('../lib/Botkit.js');
 
-var token = process.env.SLACK_TOKEN
-
-var controller = Botkit.slackbot({
-  // reconnect to Slack RTM when connection goes bad
-  retry: Infinity,
-  debug: false
-})
-
-// Assume single team mode if we have a SLACK_TOKEN
-if (token) {
-  console.log('Starting in single-team mode')
-  controller.spawn({
-    token: token
-  }).startRTM(function (err, bot, payload) {
-    if (err) {
-      throw new Error(err)
-    }
-
-    console.log('Connected to Slack RTM')
-  })
-// Otherwise assume multi-team mode - setup beep boop resourcer connection
-} else {
-  console.log('Starting in Beep Boop multi-team mode')
-  require('beepboop-botkit').start(controller, { debug: true })
+if (!process.env.clientId || !process.env.clientSecret || !process.env.port) {
+  console.log('Error: Specify clientId clientSecret and port in environment');
+  process.exit(1);
 }
 
-controller.on('bot_channel_join', function (bot, message) {
-  bot.reply(message, "I'm here!")
-})
 
-controller.hears('.*', ['mention'], function (bot, message) {
-  bot.reply(message, 'You really do care about me. :heart:')
-})
+var controller = Botkit.slackbot({
+  // interactive_replies: true, // tells botkit to send button clicks into conversations
+  json_file_store: './db_slackbutton_bot/',
+}).configureSlackApp(
+  {
+    clientId: process.env.clientId,
+    clientSecret: process.env.clientSecret,
+    scopes: ['bot'],
+  }
+);
 
-controller.hears('help', ['direct_message', 'direct_mention'], function (bot, message) {
-  var help = 'I will respond to the following messages: \n' +
-      '`bot hi` for a simple message.\n' +
-      '`bot attachment` to see a Slack attachment message.\n' +
-      '`@<your bot\'s name>` to demonstrate detecting a mention.\n' +
-      '`bot help` to see this again.'
-  bot.reply(message, help)
-})
+controller.setupWebserver(process.env.port,function(err,webserver) {
+  controller.createWebhookEndpoints(controller.webserver);
 
-controller.hears(['attachment'], ['direct_message', 'direct_mention'], function (bot, message) {
-  var text = 'Beep Beep Boop is a ridiculously simple hosting platform for your Slackbots.'
-  var attachments = [{
-    fallback: text,
-    pretext: 'We bring bots to life. :sunglasses: :thumbsup:',
-    title: 'Host, deploy and share your bot in seconds.',
-    image_url: 'https://storage.googleapis.com/beepboophq/_assets/bot-1.22f6fb.png',
-    title_link: 'https://beepboophq.com/',
-    text: text,
-    color: '#7CD197'
-  }]
+  controller.createOauthEndpoints(controller.webserver,function(err,req,res) {
+    if (err) {
+      res.status(500).send('ERROR: ' + err);
+    } else {
+      res.send('Success!');
+    }
+  });
+});
 
-  bot.reply(message, {
-    attachments: attachments
-  }, function (err, resp) {
-    console.log(err, resp)
-  })
-})
 
-controller.hears(['/quiz|.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message,direct_mention,mention', function(bot, message) {
+// just a simple way to make sure we don't
+// connect to the RTM twice for the same team
+var _bots = {};
+function trackBot(bot) {
+  _bots[bot.config.token] = bot;
+}
+
+
+controller.on('interactive_message_callback', function(bot, message) {
+
+    var ids = message.callback_id.split(/\-/);
+    var user_id = ids[0];
+    var item_id = ids[1];
+
+    controller.storage.users.get(user_id, function(err, user) {
+
+        if (!user) {
+            user = {
+                id: user_id,
+                list: []
+            }
+        }
+
+        for (var x = 0; x < user.list.length; x++) {
+            if (user.list[x].id == item_id) {
+                if (message.actions[0].value=='flag') {
+                    user.list[x].flagged = !user.list[x].flagged;
+                }
+                if (message.actions[0].value=='delete') {
+                    user.list.splice(x,1);
+                }
+            }
+        }
+
+
+        var reply = {
+            text: 'Here is <@' + user_id + '>s list:',
+            attachments: [],
+        }
+
+        for (var x = 0; x < user.list.length; x++) {
+            reply.attachments.push({
+                title: user.list[x].text + (user.list[x].flagged? ' *FLAGGED*' : ''),
+                callback_id: user_id + '-' + user.list[x].id,
+                attachment_type: 'default',
+                actions: [
+                    {
+                        "name":"flag",
+                        "text": ":waving_black_flag: Flag",
+                        "value": "flag",
+                        "type": "button",
+                    },
+                    {
+                       "text": "Delete",
+                        "name": "delete",
+                        "value": "delete",
+                        "style": "danger",
+                        "type": "button",
+                        "confirm": {
+                          "title": "Are you sure?",
+                          "text": "This will do something!",
+                          "ok_text": "Yes",
+                          "dismiss_text": "No"
+                        }
+                    }
+                ]
+            })
+        }
+
+        bot.replyInteractive(message, reply);
+        controller.storage.users.save(user);
+
+
+    });
+
+});
+
+
+controller.on('create_bot',function(bot,config) {
+
+  if (_bots[bot.config.token]) {
+    // already online! do nothing.
+  } else {
+    bot.startRTM(function(err) {
+
+      if (!err) {
+        trackBot(bot);
+      }
+
+      bot.startPrivateConversation({user: config.createdBy},function(err,convo) {
+        if (err) {
+          console.log(err);
+        } else {
+          convo.say('I am a bot that has just joined your team');
+          convo.say('You must now /invite me to a channel so that I can be of use!');
+        }
+      });
+
+    });
+  }
+
+});
+
+
+// Handle events related to the websocket connection to Slack
+controller.on('rtm_open',function(bot) {
+  console.log('** The RTM api just connected!');
+});
+
+controller.on('rtm_close',function(bot) {
+  console.log('** The RTM api just closed');
+  // you may want to attempt to re-open
+});
+
+
+controller.hears(['add (.*)'],'direct_mention,direct_message',function(bot,message) {
+
+    controller.storage.users.get(message.user, function(err, user) {
+
+        if (!user) {
+            user = {
+                id: message.user,
+                list: []
+            }
+        }
+
+        user.list.push({
+            id: message.ts,
+            text: message.match[1],
+        });
+
+        bot.reply(message,'Added to list. Say `list` to view or manage list.');
+
+        controller.storage.users.save(user);
+
+    });
+});
+
+
+controller.hears(['list','tasks'],'direct_mention,direct_message',function(bot,message) {
+
+    controller.storage.users.get(message.user, function(err, user) {
+
+        if (!user) {
+            user = {
+                id: message.user,
+                list: []
+            }
+        }
+
+        if (!user.list || !user.list.length) {
+            user.list = [
+                {
+                    'id': 1,
+                    'text': 'Test Item 1'
+                },
+                {
+                    'id': 2,
+                    'text': 'Test Item 2'
+                },
+                {
+                    'id': 3,
+                    'text': 'Test Item 3'
+                }
+            ]
+        }
+
+        var reply = {
+            text: 'Here is your list. Say `add <item>` to add items.',
+            attachments: [],
+        }
+
+        for (var x = 0; x < user.list.length; x++) {
+            reply.attachments.push({
+                title: user.list[x].text + (user.list[x].flagged? ' *FLAGGED*' : ''),
+                callback_id: message.user + '-' + user.list[x].id,
+                attachment_type: 'default',
+                actions: [
+                    {
+                        "name":"flag",
+                        "text": ":waving_black_flag: Flag",
+                        "value": "flag",
+                        "type": "button",
+                    },
+                    {
+                       "text": "Delete",
+                        "name": "delete",
+                        "value": "delete",
+                        "style": "danger",
+                        "type": "button",
+                        "confirm": {
+                          "title": "Are you sure?",
+                          "text": "This will do something!",
+                          "ok_text": "Yes",
+                          "dismiss_text": "No"
+                        }
+                    }
+                ]
+            })
+        }
+
+        bot.reply(message, reply);
+
+        controller.storage.users.save(user);
+
+    });
+
+});
+
+controller.hears('interactive', 'direct_message', function(bot, message) {
+
+    bot.reply(message, {
+        attachments:[
+            {
+                title: 'Do you want to interact with my buttons?',
+                callback_id: '123',
+                attachment_type: 'default',
+                actions: [
+                    {
+                        "name":"yes",
+                        "text": "Yes",
+                        "value": "yes",
+                        "type": "button",
+                    },
+                    {
+                        "name":"no",
+                        "text": "No",
+                        "value": "no",
+                        "type": "button",
+                    }
+                ]
+            }
+        ]
+    });
+});
+
+
+controller.hears('^stop','direct_message',function(bot,message) {
+  bot.reply(message,'Goodbye');
+  bot.rtm.close();
+});
+
+controller.on(['direct_message','mention','direct_mention'],function(bot,message) {
   bot.api.reactions.add({
     timestamp: message.ts,
     channel: message.channel,
     name: 'robot_face',
-  }, function(err, res) {
-    if (err) {
-      bot.botkit.log('Failed to add emoji reaction :(', err);
-    }
-  })
+  },function(err) {
+    if (err) { console.log(err) }
+    bot.reply(message,'I heard you loud and clear boss.');
+  });
+});
 
-  controller.storage.users.get(message.user, function(err, user) {
-    if (user && user.name) {
-      bot.reply(message, 'Hey what\'s up ' + user.name + '!! Do you wanna play ?');
-    } else {
-      bot.reply(message, 'Hey what\'s up. Do you wanna play ?');
-    }
-    bot.startConversation(message, function(err, convo) {
-      convo.ask({
-        attachments:[
-          {
-            title: 'You\'ll have to find out the capital city of a random country motherfucker mouhahaha.',
-            fallback: 'Oh what a loser you are !!',
-            callback_id: '123',
-            color: '#3AA3E3',
-            attachment_type: 'default',
-            actions: [
-              {
-                "name":"yes",
-                "text": "YES",
-                "style": "primary",
-                "type": "button",
-                "value": "yes"
-              },
-              {
-                "name":"no",
-                "text": "NO",
-                "style": "default",
-                "type": "button",
-                "value": "no"
-              }
-            ]
-          }
-        ]
-      },
-      [
-      {
-        pattern:"yes",
-        callback: function(reply, convo) {
-          //convo.say('It\'s good');
-          //convo.next();
-          }
-      },
-      {
-        pattern:"no",
-        callback: function(reply) {
-            //convo.say('It\'s not good');
-            //convo.next();
-            }
+controller.storage.teams.all(function(err,teams) {
+
+  if (err) {
+    throw new Error(err);
+  }
+
+  // connect all teams with bots up to slack!
+  for (var t  in teams) {
+    if (teams[t].bot) {
+      controller.spawn(teams[t]).startRTM(function(err, bot) {
+        if (err) {
+          console.log('Error connecting bot to Slack:',err);
+        } else {
+          trackBot(bot);
         }
-        {
-          default: true,
-          callback: function(reply, convo) {
+      });
+    }
+  }
 
-          }
-        }
-      ])
-    })
-  })
-})
-
-controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
-  bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. \n')
-})
+});
