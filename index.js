@@ -112,20 +112,20 @@ controller.hears(['/quiz|.*play|game|Hi|Hello|Salut|Bonjour.*'], 'direct_message
           {
             pattern:"no",
             callback: function(reply) {
-              bot.reply(message, 'It\'s not good')
+              bot.reply(message, 'It\'s not good');
             }
           },
           {
             default: true,
             callback: function(reply) {
-              
+
             }
           }
         }
       ]
-    })
-  })
-})
+    });
+  });
+});
 
 controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
   bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. \n')
