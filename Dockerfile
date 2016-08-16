@@ -1,8 +1,1 @@
-FROM library/node:slim
-
-COPY . /app
-
-RUN cd /app \
-  && npm install --production
-
-WORKDIR /app
+FROM node:4.2-onbuild
