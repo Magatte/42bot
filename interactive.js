@@ -32,7 +32,7 @@ if (!process.env.clientId || !process.env.clientSecret || !process.env.port) {
   process.exit(1);
 }
 
-alert('Hello');
+//alert('Hello');
 var controller = Botkit.slackbot({
   // interactive_replies: true, // tells botkit to send button clicks into conversations
   json_file_store: './db_slackbutton_bot/',
