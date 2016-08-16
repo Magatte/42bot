@@ -2,9 +2,9 @@
   "name": "node-slack-bot",
   "version": "1.0.0",
   "description": "A sample Beep Boop Node.js Slackbot",
-  "main": "index.js",
+  "main": "interactive.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node interactive.js"
   },
   "repository": {
     "type": "git",
