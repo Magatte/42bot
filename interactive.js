@@ -1,27 +1,3 @@
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-           ______     ______     ______   __  __     __     ______
-          /\  == \   /\  __ \   /\__  _\ /\ \/ /    /\ \   /\__  _\
-          \ \  __<   \ \ \/\ \  \/_/\ \/ \ \  _"-.  \ \ \  \/_/\ \/
-           \ \_____\  \ \_____\    \ \_\  \ \_\ \_\  \ \_\    \ \_\
-            \/_____/   \/_____/     \/_/   \/_/\/_/   \/_/     \/_/
-This is a sample Slack Button application that adds a bot to one or many slack teams.
-# RUN THE APP:
-  Create a Slack app. Make sure to configure the bot user!
-    -> https://api.slack.com/applications/new
-    -> Add the Redirect URI: http://localhost:3000/oauth
-  Run your bot from the command line:
-    clientId=<my client id> clientSecret=<my client secret> port=3000 node slackbutton_bot.js
-# USE THE APP
-  Add the app to your Slack by visiting the login page:
-    -> http://localhost:3000/login
-  After you've added the app, try talking to your bot!
-# EXTEND THE APP:
-  Botkit has many features for building cool and useful bots!
-  Read all about it here:
-    -> http://howdy.ai/botkit
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-/* Uses the slack button feature to offer a real time bot to multiple teams */
 var Botkit = require('./lib/Botkit.js');
 
 if (!process.env.clientId || !process.env.clientSecret || !process.env.port) {
@@ -105,6 +81,59 @@ controller.hears('^stop','direct_message',function(bot,message) {
   bot.rtm.close();
 });
 
+controller.hears('quiz', 'direct_message', function(bot,message) {
+	bot.reply(message, 'Let\'s play !!!');
+	bot.startConversation(message, function(err, convo) {
+		convo.ask({
+			attachments:[
+				{
+					title: 'Do you really want to proceed ?',
+					callback_id: '123',
+					color: "#3AA3E3",
+					attachment_type: 'default',
+					actions: [
+						{
+							"name":"yes",
+							"text":"Yes",
+							"value":"yes",
+							"style":"primary",
+							"type":"button",
+						},
+						{
+							"name":"no",
+							"text":"No",
+							"value":"no",
+							"type":"button",
+						}
+					]
+				}
+			]
+		},[
+			{
+				pattern: "yes",
+				callback: function(reply, convo) {
+					convo.say('FABULOUS!');
+					convo.next();
+					//do something
+				}
+			},
+			{
+				pattern:"no",
+				callback: function(reply, convo) {
+					convo.say('Too bad');
+					convo.next();
+				}
+			},
+			{
+				default: true,
+				callback: function(reply, convo) {
+					//do nothing
+				}
+			}
+		]);
+	});
+});
+
 controller.on(['direct_message','mention','direct_mention'],function(bot,message) {
   bot.api.reactions.add({
     timestamp: message.ts,
@@ -115,7 +144,6 @@ controller.on(['direct_message','mention','direct_mention'],function(bot,message
     bot.reply(message,'I heard you loud and clear boss.');
   });
 });
-
 controller.storage.teams.all(function(err,teams) {
 
   if (err) {
