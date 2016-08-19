@@ -29,8 +29,6 @@ controller.setupWebserver(process.env.port,function(err,webserver) {
 });
 
 
-// just a simple way to make sure we don't
-// connect to the RTM twice for the same team
 var _bots = {};
 function trackBot(bot) {
   _bots[bot.config.token] = bot;
@@ -51,7 +49,7 @@ controller.on('create_bot',function(bot,config) {
         if (err) {
           console.log(err);
         } else {
-          convo.say('I am a bot that has just joined your team');
+          convo.say('I am a 42bot that has just joined your team');
           convo.say('You must now /invite me to a channel so that I can be of use!');
         }
       });
@@ -72,16 +70,26 @@ controller.on('rtm_close',function(bot) {
   // you may want to attempt to re-open
 });
 
-controller.hears('hello','direct_message',function(bot,message) {
-  bot.reply(message,'Hello!');
+controller.on(['direct_message','mention','direct_mention'],function(bot,message) {
+  bot.api.reactions.add({
+    timestamp: message.ts,
+    channel: message.channel,
+    name: 'robot_face',
+  },function(err) {
+    if (err) { console.log(err) }
+  });
 });
 
-controller.hears('^stop','direct_message',function(bot,message) {
+controller.hears(['hello|hi|salut|bonjour.*'],'direct_message,direct_mention,mention',function(bot,message) {
+  bot.reply(message,'Hello! I\'m 42bot and you can asks some question but I don\'t know everything');
+});
+
+controller.hears('^stop.*','direct_message,direct_mention,mention',function(bot,message) {
   bot.reply(message,'Goodbye');
   bot.rtm.close();
 });
 
-controller.hears('quiz', 'direct_message', function(bot,message) {
+controller.hears('.*quiz.*', 'direct_message,direct_mention,mention', function(bot,message) {
 	bot.reply(message, 'Let\'s play !!!');
 	bot.startConversation(message, function(err, convo) {
 		convo.ask({
@@ -114,7 +122,7 @@ controller.hears('quiz', 'direct_message', function(bot,message) {
 				callback: function(reply, convo) {
 					convo.say('FABULOUS!');
 					convo.next();
-					//do something
+					//ask for action URL to do something
 				}
 			},
 			{
@@ -122,6 +130,7 @@ controller.hears('quiz', 'direct_message', function(bot,message) {
 				callback: function(reply, convo) {
 					convo.say('Too bad');
 					convo.next();
+					//ask for action URL to do something
 				}
 			},
 			{
@@ -134,16 +143,6 @@ controller.hears('quiz', 'direct_message', function(bot,message) {
 	});
 });
 
-controller.on(['direct_message','mention','direct_mention'],function(bot,message) {
-  bot.api.reactions.add({
-    timestamp: message.ts,
-    channel: message.channel,
-    name: 'robot_face',
-  },function(err) {
-    if (err) { console.log(err) }
-    bot.reply(message,'I heard you loud and clear boss.');
-  });
-});
 controller.storage.teams.all(function(err,teams) {
 
   if (err) {

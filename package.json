@@ -1,26 +1,25 @@
 {
-  "name": "node-slack-bot",
+  "name": "42bot",
   "version": "1.0.0",
-  "description": "A sample Beep Boop Node.js Slackbot",
-  "main": "interactive.js",
+  "description": "My 42bot",
+  "main": "index.js",
   "scripts": {
-    "start": "node interactive.js"
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/beepboophq/node-slack-bot.git"
+    "url": "git+https://github.com/Magatte/42bot.git"
   },
   "keywords": [
     "slackbot",
     "bot",
     "slack"
   ],
-  "author": "",
-  "license": "MIT",
+  "author": "Magatte",
   "bugs": {
-    "url": "https://github.com/beepboophq/node-slack-bot/issues"
+    "url": "https://github.com/Magatte/42bot/issues"
   },
-  "homepage": "https://github.com/beepboophq/node-slack-bot#readme",
+  "homepage": "https://github.com/Magatte/42bot#readme",
   "dependencies": {
     "beepboop-botkit": "^1.4.1",
     "botkit": "~0.2.2"
