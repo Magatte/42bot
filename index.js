@@ -1,12 +1,14 @@
 var Botkit = require('./lib/Botkit.js');
 
-if (!process.env.clientId || !process.env.clientSecret || !process.env.port) {
+/*if (!process.env.clientId || !process.env.clientSecret || !process.env.port) {
   console.log('Error: Specify clientId clientSecret and port in environment');
   process.exit(1);
-}
+}*/
 
 
 var controller = Botkit.slackbot({
+  retry: Infinity,
+  debug: false,
   json_file_store: './db_slackbutton_bot/',
 }).configureSlackApp(
   {
@@ -40,9 +42,10 @@ controller.on('create_bot',function(bot,config) {
     // already online! do nothing.
   } else {
     bot.startRTM(function(err) {
-
-      if (!err) {
-        trackBot(bot);
+	console.log('Starting in Beep Boop multi-team mode');
+	require('beepboop-botkit').start(controller, {debug:true});
+	if (!err) {
+		trackBot(bot);
       }
 
       bot.startPrivateConversation({user: config.createdBy},function(err,convo) {
@@ -81,7 +84,7 @@ controller.on(['direct_message','mention','direct_mention'],function(bot,message
 });
 
 controller.hears(['hello|hi|salut|bonjour.*'],'direct_message,direct_mention,mention',function(bot,message) {
-  bot.reply(message,'Hello! I\'m 42bot and you can asks some question but I don\'t know everything');
+  bot.reply(message,'Hello! I\'m 42bot. You can asks some question but I don\'t know everything');
 });
 
 controller.hears('^stop.*','direct_message,direct_mention,mention',function(bot,message) {
